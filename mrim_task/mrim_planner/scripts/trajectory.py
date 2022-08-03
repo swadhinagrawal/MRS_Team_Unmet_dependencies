@@ -178,7 +178,8 @@ class TrajectoryUtils():
 
             # get desired heading change in interval <0, 2pi)
             g_to  = subtraj[-1]
-            d_hdg = wrapAngle(g_to.heading - g_from.heading)
+            #d_hdg = wrapAngle(g_to.heading - g_from.heading)
+            d_hdg = wrapAngle(angleDiff(g_from.heading,g_to.heading)) #<--- 
 
             # get initial heading and subtraj length
             hdg_from    = wrapAngle(g_from.heading)
@@ -199,9 +200,11 @@ class TrajectoryUtils():
                 # Tips:
                 #  - interpolate the heading linearly (create a function of distance between two points of the subpath)
                 #  - do not forget to wrap angle to <-pi, pi) (see/use wrapAngle() in utils.py)
-
+                
+		interhd=wrapAngle(hdg_from + d_hdg/len(subtraj))
+		
                 # [STUDENTS TODO] Change variable 'hdg_interp', nothing else
-                hdg_interp = waypoints[0].heading
+                hdg_interp = interhd
 
                 # replace heading
                 hdg_from   = hdg_interp
