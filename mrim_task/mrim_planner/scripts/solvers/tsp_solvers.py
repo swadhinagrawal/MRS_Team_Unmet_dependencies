@@ -273,7 +273,7 @@ class TSPSolver3D():
 
             kmeans = KMeans(n_clusters=2, random_state=0).fit(positions)
 
-            labels = np.array(kmeans.labels_)
+            labels = np.unique(np.array(kmeans.labels_))
             print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             print(labels)
             print(problem.start_poses)
