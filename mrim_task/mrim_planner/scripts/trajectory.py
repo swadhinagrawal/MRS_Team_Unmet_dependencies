@@ -1,4 +1,4 @@
-"""
+﻿"""
 Custom TSP Loader
 @author: P. Petracek, V. Kratky
 """
@@ -200,9 +200,9 @@ class TrajectoryUtils():
                 # Tips:
                 #  - interpolate the heading linearly (create a function of distance between two points of the subpath)
                 #  - do not forget to wrap angle to <-pi, pi) (see/use wrapAngle() in utils.py)
-                
-		interhd=wrapAngle(hdg_from + d_hdg/len(subtraj))
-		
+
+		        interhd=wrapAngle(hdg_from + d_hdg/len(subtraj))
+
                 # [STUDENTS TODO] Change variable 'hdg_interp', nothing else
                 hdg_interp = interhd
 
@@ -447,12 +447,17 @@ class TrajectoryUtils():
             sampling_step = trajectory.dT
 
             # STUDENTS TODO: Sample the path parametrization 'toppra_trajectory' (instance of TOPPRA library).
-            raise NotImplementedError('[STUDENTS TODO] Trajectory sampling not finished. You have to implement it on your own.')
+            #raise NotImplementedError('[STUDENTS TODO] Trajectory sampling not finished. You have to implement it on your own.')
             # Tips:
             #  - check documentation for TOPPRA (look for eval() function): https://hungpham2511.github.io/toppra/index.html
             #  - use 'toppra_trajectory' and the predefined sampling step 'sampling_step'
 
-            samples = [] # [STUDENTS TODO] Fill this variable with trajectory samples
+            ts_sample = np.linspace(0, toppra_trajectory.duration , math.floor(toppra_trajectory.duration/sampling_step))
+            #samples = [] # [STUDENTS TODO] Fill this variable with trajectory samples
+            samples= toppra_trajectory.eval(ts_sample)
+
+            samples = toppra_trajectory.eval(sampling_step)  # sampled joint position
+
 
             # Convert to Trajectory class
             poses      = [Pose(q[0], q[1], q[2], q[3]) for q in samples]
@@ -633,12 +638,6 @@ class TrajectoryUtils():
             i = 0
             while collision_flag:
             
-                if traj_times[0] > traj_times[1]:
-                    delay_robot_idx = 1
-                    nondelay_robot_idx = 0
-                else:
-                    delay_robot_idx = 0
-                    nondelay_robot_idx = 1
                 # delay the shorter-trajectory UAV at the start point by sampling period
 
                 if i < collision_idx:
@@ -646,9 +645,11 @@ class TrajectoryUtils():
                     # TIP: use function `trajectory.delayStart(X)` to delay a UAV at the start location by X seconds
                     trajectories[delay_robot_idx].delayStart(delay_step)
                     
-                    collision_flag, collision_idx = \
-                        self.trajectoriesCollide(trajectories[delay_robot_idx], trajectories[nondelay_robot_idx],
-                                                 safety_distance)
+                    if i>5:
+                        collision_flag, collision_idx = \
+                            self.trajectoriesCollide(trajectories[delay_robot_idx], trajectories[nondelay_robot_idx],
+                                                  safety_distance)
+
                     i+=1
                 else:
                     collision_flag = False
