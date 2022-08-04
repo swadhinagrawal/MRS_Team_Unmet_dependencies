@@ -3,6 +3,147 @@ import random, time
 from utils import distEuclidean
 from data_types import Point
 
+class shortpath:
+    def __init__(self,goal,graph):
+        self.goal = goal
+        self.graph = graph
+    def shortoptpath(self):
+        x = []
+        y = []
+        backtrace = self.goal
+        while True:
+            for k in self.graph[1]:
+                if k['current']==backtrace:
+                    c=k
+                    # print (c)
+                    break
+
+            x.append(c['current'][0])
+            y.append(c['current'][1])
+            # print (fnd)
+            if backtrace==[] or backtrace==c['previous']:
+                return [x,y]
+            backtrace=c['previous']  
+
+class rrtstar:
+    def __init__(self,cirrad,goal,source,obs,obsradius,goalthresh,area):
+        self.cirrad = cirrad
+        self.goal = goal
+        self.source = source
+        self.obs = obs
+        self.obsradius = obsradius
+        self.goalthresh = goalthresh
+        self.area = area
+        self.nodes = [{'node':source,'ds':0}]
+        self.edges =[{'previous':[],'current':source,'next':[]}]
+
+
+    def nodesearch(self,a,arr):
+        for s in arr:
+            if s['node']==a:
+                return s
+
+    def eucdis(self,a,b):
+        return ((a[0]-b[0])**2 + (a[1]-b[1])**2)**0.5
+
+    def cursearch(self,a,arr):
+        for s in arr:
+            if s['current']==a:
+                return s
+
+    def prevsearch(self,a,arr):
+        for s in arr:
+            if s['previous']==a:
+                return s
+    def lineobsdis(self,a,l1,l2):
+        d = (l1[0]-l2[0])*a[1]-(l1[1]-l2[1])*a[0] - l1[1]*(l1[0]-l2[0]) + l1[0]*(l1[1]-l2[1])
+        d1= abs(d)/(((l2[1]-l1[1])**2+(l1[0]-l2[0])**2)**0.5)
+        return d1
+
+    def rstar(self):
+        while True:
+            sample = [self.area*random.random(),self.area*random.random()] #generates sample point (x,y)
+            obsdis = [self.eucdis(o,sample) for o in self.obs] #finds distance of sample from obstacles
+            #following checks if sample is not in any of the obstacles
+            count = 0
+            for k in range(len(obsdis)):
+                if obsdis[k]>self.obsradius[k]:
+                    count+=1   
+            # if not in obstacles go further        
+            if count ==len(self.obs):
+                # Following creates a pack of nodes inside the virtual circle
+                pack = []
+                for i in self.nodes:
+                    if self.eucdis(sample,i['node'])<=self.cirrad:
+                        pack.append(i)
+                # if pack is not empty process further, pack = [{'node':,'ds':}]
+                if len(pack)!=0:    
+                    # print pack
+                    # following calculates distance from source along other nodes
+                    dist = []
+                    for i in pack:
+                        dist.append(self.eucdis(i['node'],sample)+i['ds'])
+                    # gives index of node closest to source
+                    minimum = np.argmin(dist)
+                    # print minimum
+                    #following checks if edge lies inside any obstacle
+                    count = 0
+                    lineobdis = [self.lineobsdis(r,pack[minimum]['node'],sample) for r in self.obs]
+                    for k in range(len(lineobdis)):
+                        if lineobdis[k]>self.obsradius[k]:
+                            count+=1
+                    # if the edge doesn't pass through obstacle, process further        
+                    if count ==len(self.obs):
+                        # append the sample with its distance from source to nodes   
+                        self.nodes.append({'node':sample,'ds':pack[minimum]['ds']+self.eucdis(pack[minimum]['node'],sample)})
+                        #append the edge to edges
+                        self.edges.append({'previous':pack[minimum]['node'],'current':sample,'next':[]})
+                        #plot the edge
+                        # plt.plot([pack[minimum]['node'][0],sample[0]],[pack[minimum]['node'][1],sample[1]],'blue')
+                        l = self.cursearch(pack[minimum]['node'],self.edges)
+                        l['next'].append(sample)
+                        for k in pack:
+                            # choose a random node in pack which has an edge both previous and next
+                            wirenode = pack[random.randint(0,len(pack)-1)]
+                            # find the edge connections of the wirenode
+                            wirenode = self.cursearch(wirenode['node'],self.edges)
+                            if wirenode != None:
+                                # makesure wirenode exists and it has a previous and next connection 
+                                if wirenode['previous']!=[] and len(wirenode['next'])!=0:    
+                                    for wirenext in wirenode['next']: 
+                                        # for all next in wirenode, if finds length between prev and next less than prev to curr+ curr to next                            
+                                        count = 0
+                                        lineobdis = [self.lineobsdis(r,wirenode['previous'],wirenext) for r in self.obs]
+                                        for k in range(len(lineobdis)):
+                                            if lineobdis[k]>self.obsradius[k]:
+                                                count+=1
+                                        if (self.eucdis(wirenode['previous'],wirenext)<self.eucdis(wirenode['previous'],wirenode['current'])+self.eucdis(wirenext,wirenode['current'])) and (count ==len(self.obs)):
+                                            # plt.plot([sea['previous'][0],si[0]],[sea['previous'][1],si[1]],'blue')
+                                            #finds edge of 'next' node and 'prev' node  
+                                            nex = self.cursearch(wirenext,self.edges)
+                                            prev = self.prevsearch(wirenode['previous'],self.edges)
+                                            # appends next in next of prev and replaces prev of next with prev
+                                            self.edges[self.edges.index(prev)]['next'].append(wirenext)
+                                            self.edges[self.edges.index(nex)]['previous'] = wirenode['previous']
+                                            # deletes next from wirenode
+                                            del  self.edges[self.edges.index(wirenode)]['next'][wirenode['next'].index(wirenext)]
+                                            # self.edges[self.edges.index(wirenode)]['previous'] = wirenext
+                                            # del sea['next'][sea['next'].index(si)]
+                                    break  
+                        #update the cost
+                        # if sample is less than threshold distance from goal
+                        if self.eucdis(sample,self.goal)<=self.goalthresh:
+                            #finds sample node in nodes
+                            sam = self.nodesearch(sample,self.nodes)
+                            # appends goal node ans sample-goal edge
+                            self.nodes.append({'node':self.goal,'ds':sam['ds']+self.eucdis(sample,self.goal)})
+                            self.edges.append({'previous':sample,'current':self.goal,'next':[]})
+                            # plt.plot([sample[0],goal[0]],[sample[1],goal[1]],'blue')
+                            # returns nodes, edges and number of paths
+                            return [self.nodes,self.edges]     
+
+
+
 # # #{ class Tree
 class Tree:
     def __init__(self, root_coordinates):
@@ -228,16 +369,26 @@ class RRT:
         cost   = self.tree.get_cost(closest_point) + distEuclidean(closest_point, point)
 
         neighborhood_points = self.getPointsInNeighborhood(point, neighborhood)
-        for neighbor in neighborhood_points:
 
-            raise NotImplementedError('[STUDENTS TODO] Getting node parents in RRT* not implemented. You have to finish it.')
+        temp_cost = float('inf')
+        temp_closest = closest_point
+        for neighbor in neighborhood_points:
+            # print('5555556666666666666666666666666666666Printing closes point')
+            # print(temp_closest)
+            # raise NotImplementedError('[STUDENTS TODO] Getting node parents in RRT* not implemented. You have to finish it.')
             # Tips:
             #  - look for neighbor which when connected yields minimal path cost all the way back to the start
             #  - you might need functions 'self.tree.get_cost()' or 'distEuclidean()'
 
             # TODO: fill these two variables
-            cost = float('inf') 
-            parent = closest_point
+            test = self.tree.get_cost(temp_closest) + distEuclidean(temp_closest, neighbor)
+            if test < temp_cost:
+                temp_cost = test
+                temp_closest = neighbor
+
+
+        cost = temp_cost
+        parent = temp_closest
 
         return parent, cost
     # # #}
