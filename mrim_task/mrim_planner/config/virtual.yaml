@@ -9,19 +9,19 @@ tsp:
 
 # Parameters for path planning
 path_planner:
-  timeout: 10.0              # (s) timeout for single start-to-goal planning
+  timeout: 30.0              # (s) timeout for single start-to-goal planning#10
   method: 'rrtstar'              # [STUDENTS TODO: implement better method than the default] Method for generating start-to-goal paths: [euclidean, astar, rrt (default), rrtstar]
   straighten_paths: false    # [STUDENTS TODO: implement better method than the default] Path straightening flag (default: false)
 
   # RRT and RRT* method parameters
   rrt:
-    branch_size: 25.0 # (m)#21
+    branch_size: 20.0 # (m)#21
     sampling:
       method: 'uniform' # [STUDENTS TODO: implement better method than the default] Method for sampling random points: [uniform (default), gaussian]
       gaussian:
         stddev_inflation: 0.1 # Inflation of standard deviation in all axes during gaussian sampling (m)
     star:
-      neighborhood: 0.7 # (m)
+      neighborhood: 1.0 # (m)#0.7
 
   # A* method parameters
   astar:

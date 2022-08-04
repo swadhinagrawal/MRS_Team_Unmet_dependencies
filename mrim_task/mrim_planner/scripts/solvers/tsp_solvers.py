@@ -102,7 +102,7 @@ class TSPSolver3D():
 
         # find path between each pair of goals (a, b)
         for a in range(n):
-            for b in range(n):
+            for b in range(a,n):
                 if a == b:
                     continue
 
@@ -122,6 +122,8 @@ class TSPSolver3D():
 
                 self.paths[(a, b)]   = path
                 self.distances[a][b] = distance
+            for b in range(a):
+                self.paths[(a, b)] = self.paths[(b,a)]
 
         # compute TSP tour
         path = self.compute_tsp_tour(viewpoints, path_planner)
@@ -197,14 +199,16 @@ class TSPSolver3D():
 
         path = []
         n    = len(self.distances)
-
+        print(n)
         for a in range(n):
             b = (a + 1) % n
+
             a_idx       = sequence[a]
             b_idx       = sequence[b]
 
             # if the paths are already computed
             if path_planner['distance_estimation_method'] == path_planner['path_planning_method']:
+                print(self.paths)
                 actual_path = self.paths[(a_idx, b_idx)]
             # if the path planning and distance estimation methods differ, we need to compute the path
             else:
@@ -273,15 +277,16 @@ class TSPSolver3D():
 
             kmeans = KMeans(n_clusters=2, random_state=0).fit(positions)
 
-            labels = np.unique(np.array(kmeans.labels_))
+            labels = np.array(kmeans.labels_)
             print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             print(labels)
+            
             print(problem.start_poses)
             print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             for i in range(k):
                 dist = []
                 uav = problem.start_poses[i]
-                for j in range(len(labels)):
+                for j in range(len(np.unique(labels))):
                     dist.append(np.linalg.norm(np.array(kmeans.cluster_centers_[j])-np.array([uav.position.x,uav.position.y,uav.position.z])))
                 labels[i] = dist.index(min(dist))
             print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
