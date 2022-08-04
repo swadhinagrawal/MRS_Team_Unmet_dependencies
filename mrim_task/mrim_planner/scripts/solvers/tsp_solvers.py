@@ -119,6 +119,7 @@ class TSPSolver3D():
                 path, distance = self.compute_path(g1, g2, path_planner, path_planner['distance_estimation_method'])
 
                 # store paths/distances in matrices
+
                 self.paths[(a, b)]   = path
                 self.distances[a][b] = distance
 
