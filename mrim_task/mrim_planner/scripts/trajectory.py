@@ -462,8 +462,6 @@ class TrajectoryUtils():
             #samples = [] # [STUDENTS TODO] Fill this variable with trajectory samples
             samples= toppra_trajectory.eval(ts_sample)
 
-            samples = toppra_trajectory.eval(sampling_step)  # sampled joint position
-
 
             # Convert to Trajectory class
             poses      = [Pose(q[0], q[1], q[2], q[3]) for q in samples]
